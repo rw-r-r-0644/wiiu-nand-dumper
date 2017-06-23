@@ -20,6 +20,7 @@
  *	see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
  */
 
+#include <stdlib.h>
 #include "video/gfx.h"
 #include "system/ppc.h"
 #include "system/exception.h"
@@ -28,8 +29,10 @@
 #include "storage/sd/sdcard.h"
 #include "storage/sd/fatfs/elm.h"
 #include "storage/isfs.h"
+#include "storage/crypto.h"
 #include "application.h"
 #include "system/smc.h"
+#include "system/latte.h"
 #include "common/utils.h"
 
 void __attribute__((__noreturn__)) _main(void* base) {
@@ -44,6 +47,10 @@ void __attribute__((__noreturn__)) _main(void* base) {
 
 	irq_initialize();
 	printf("[ OK ] Setup Interrupts\n");
+
+	srand(read32(LT_TIMER));
+	crypto_initialize();
+	printf("[ OK ] Setup Crypto\n");
 
 	sdcard_init();
 	printf("[ OK ] Setup SD Card\n");
