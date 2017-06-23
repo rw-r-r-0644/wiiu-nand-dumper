@@ -13,9 +13,9 @@
 #include <wctype.h>
 
 #include "string.h"
-#include "sdcard.h"
-#include "sdhc.h"
-#include "utils.h"
+#include "storage/sd/sdcard.h"
+#include "storage/sd/sdhc.h"
+#include "common/utils.h"
 
 static u8 buffer[SDMMC_DEFAULT_BLOCKLEN * SDHC_BLOCK_COUNT_MAX] ALIGNED(32);
 

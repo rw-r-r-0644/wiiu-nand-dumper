@@ -14,18 +14,74 @@
  *	Copyright (C) 2009          Andre Heider "dhewg" <dhewg@wiibrew.org>
  *	Copyright (C) 2009          John Kelley <wiidev@kelley.ca>
  *
+ *	(see https://github.com/Dazzozo/minute)
+ *
  *	This code is licensed to you under the terms of the GNU GPL, version 2;
  *	see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
  */
 
 #include "video/gfx.h"
+#include "system/ppc.h"
+#include "exception.h"
+#include "system/memory.h"
+#include "system/irq.h"
+#include "storage/sd/sdcard.h"
+#include "storage/sd/fatfs/elm.h"
+#include "storage/isfs.h"
+#include "application.h"
+#include "system/smc.h"
+#include "common/utils.h"
 
-void* _main(void* base) {
+void __attribute__((__noreturn__)) _main(void* base) {
 	gfx_clear(GFX_ALL, BLACK);
-	printf("Hello World!");
+	printf("Hello World!\n");
 
+	//while (1) {}
 
+	//Initialize everything
+	exception_initialize();
+	printf("[ OK ] Setup Exceptions\n");
+	mem_initialize();
+	printf("[ OK ] Turned on Caches/MMU\n");
 
-	while (1) {}
-	return (void*)0;
+	irq_initialize();
+	printf("[ OK ] Setup Interrupts\n");
+
+	sdcard_init();
+	printf("[ OK ] Setup SD Card\n");
+
+	int res = ELM_Mount();
+	if (res) {
+		printf("[FATL] SD Card mount error: %d\n", res);
+		panic(0);
+	}
+	printf("[ OK ] Mounted SD Card\n");
+
+	isfs_init();
+	printf("[ OK ] Mounted SLC\n");
+
+	printf("--------------------------\n");
+	printf("          Ready!          \n");
+	printf("--------------------------\n");
+	//We're good to go!
+
+	app_run();
+
+	//Clean up and shut down
+	isfs_fini();
+	printf("[ OK ] Unmounted SLC\n");
+
+	ELM_Unmount();
+	sdcard_exit();
+	printf("[ OK ] Unmounted SD\n");
+
+	irq_shutdown();
+	printf("[ OK ] Removed Interrupts\n");
+
+	mem_shutdown();
+	printf("[ OK ] Disabled caches/MMU\n");
+
+	printf("Bye!");
+
+	smc_reset();
 }

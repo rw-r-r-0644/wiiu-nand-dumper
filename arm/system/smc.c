@@ -148,7 +148,7 @@ void smc_set_panic_reason(const char* buffer)
     write32(EXI0_CSR, 0);
 }
 
-void SRAM_TEXT smc_shutdown(bool reset)
+void SRAM_TEXT __attribute__((__noreturn__)) smc_shutdown(bool reset)
 {
     write16(MEM_FLUSH_MASK, 0b1111);
     while(read16(MEM_FLUSH_MASK) & 0b1111);
@@ -257,12 +257,12 @@ void SRAM_TEXT smc_shutdown(bool reset)
     while(true);
 }
 
-void smc_power_off(void)
+void __attribute__((__noreturn__)) smc_power_off(void)
 {
     smc_shutdown(false);
 }
 
-void smc_reset(void)
+void __attribute__((__noreturn__)) smc_reset(void)
 {
     smc_shutdown(true);
 }

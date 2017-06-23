@@ -17,7 +17,7 @@
 */
 
 #include "elm.h"
-#include "types.h"
+#include "common/types.h"
 
 #include <sys/iosupport.h>
 #include <sys/errno.h>
