@@ -9,16 +9,11 @@
 
 #include "ppc-asm.h"
 
-/*	Relative to the ELF base address, thus _start will be at 0x1000.
- *	Sure, I *could* use the ELF entrypoint, but this is easier.
- */
-.org 0
-
 /*	Test function; just writes 0xBABE.
  *	Not much to say here.
  */
 .globl _start
-start:
+_start:
 	li r3, 0
 	li r4, 0xBABE@l
 	stw r4, 0(r3)

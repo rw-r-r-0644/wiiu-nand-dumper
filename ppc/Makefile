@@ -2,7 +2,7 @@
 
 SOURCES		:=	.
 BUILD		:=	build
-TARGET 		:= 	ppc-stuff
+TARGET 		:= 	ppc-kernel
 
 CFLAGS		:=
 LDFLAGS		:=	-n
