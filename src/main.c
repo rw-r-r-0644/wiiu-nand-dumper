@@ -1,5 +1,5 @@
 /*
- *	It's a Project!
+ *	It's a Project! linux-loader
  *
  *	Copyright (C) 2017          Ash Logan <quarktheawesome@gmail.com>
  *
@@ -22,6 +22,10 @@
 
 void* _main(void* base) {
 	gfx_clear(GFX_ALL, BLACK);
+	printf("Hello World!");
 
+
+
+	while (1) {}
 	return (void*)0;
 }

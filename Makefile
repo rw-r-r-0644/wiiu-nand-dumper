@@ -20,7 +20,8 @@ export TARGET		:=	$(shell basename $(CURDIR))
 export BUILD		?=	build
 
 R_SOURCES			:=
-SOURCES				:=	src src/video
+SOURCES				:=	src src/video src/storage src/storage/sd \
+						src/storage/fatfs src/common src/system
 
 R_INCLUDES			:=
 INCLUDES 			:=	src
