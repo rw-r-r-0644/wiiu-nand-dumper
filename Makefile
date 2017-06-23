@@ -20,10 +20,10 @@ export TARGET		:=	$(shell basename $(CURDIR))
 export BUILD		?=	build
 
 R_SOURCES			:=
-SOURCES				:=	source source/fatfs externals/inih
+SOURCES				:=	src src/video
 
 R_INCLUDES			:=
-INCLUDES 			:=	source source/fatfs externals/inih
+INCLUDES 			:=	src
 
 DATA				:=
 
