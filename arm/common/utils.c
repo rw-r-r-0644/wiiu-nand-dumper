@@ -12,9 +12,9 @@
 
 #include "types.h"
 #include "utils.h"
-#include "gfx.h"
-#include "gpio.h"
-#include "latte.h"
+#include "video/gfx.h"
+#include "system/gpio.h"
+#include "system/latte.h"
 
 #include <stdarg.h>
 
@@ -77,4 +77,3 @@ void panic(u8 v)
         //udelay(500000);
     }
 }
-
