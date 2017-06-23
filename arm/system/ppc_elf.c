@@ -11,10 +11,10 @@
  *  see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
  */
 
-#include "types.h"
+#include "common/types.h"
 #include "ppc.h"
-#include "utils.h"
-#include "gfx.h"
+#include "common/utils.h"
+#include "video/gfx.h"
 #include <stdio.h>
 #include <sys/errno.h>
 #include "elf.h"
