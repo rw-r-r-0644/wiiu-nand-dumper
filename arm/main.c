@@ -22,7 +22,7 @@
 
 #include "video/gfx.h"
 #include "system/ppc.h"
-#include "exception.h"
+#include "system/exception.h"
 #include "system/memory.h"
 #include "system/irq.h"
 #include "storage/sd/sdcard.h"
@@ -35,8 +35,6 @@
 void __attribute__((__noreturn__)) _main(void* base) {
 	gfx_clear(GFX_ALL, BLACK);
 	printf("Hello World!\n");
-
-	//while (1) {}
 
 	//Initialize everything
 	exception_initialize();
