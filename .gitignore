@@ -1,0 +1,26 @@
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+*.bin
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+.metadata
+.project
+.cproject
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+
+# Project-specific
+build/
+fw.img
+compile.sh
