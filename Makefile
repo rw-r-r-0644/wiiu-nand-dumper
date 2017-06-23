@@ -16,15 +16,15 @@ include $(DEVKITARM)/ds_rules
 # INCLUDES is a list of directories containing header files
 # SPECS is the directory containing the important build and link files
 #---------------------------------------------------------------------------------
-export TARGET		:=	$(shell basename $(CURDIR))
+export TARGET		:=	$(shell basename $(CURDIR))-arm
 export BUILD		?=	build
 
 R_SOURCES			:=
-SOURCES				:=	src src/video src/storage src/storage/sd \
-						src/storage/fatfs src/common src/system
+SOURCES				:=	arm arm/video arm/storage arm/storage/sd \
+						arm/storage/fatfs arm/common arm/system
 
 R_INCLUDES			:=
-INCLUDES 			:=	src
+INCLUDES 			:=	arm
 
 DATA				:=
 
@@ -111,7 +111,7 @@ $(BUILD):
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@$(MAKE) -C $(ROOTDIR)/elfloader clean
+	@$(MAKE) -C $(ROOTDIR)/arm-elfloader clean
 	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT)-strip.elf
 
 
@@ -123,7 +123,7 @@ DEPENDS		:=	$(OFILES:.o=.d)
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
-ELFLOADER = $(ROOTDIR)/elfloader/elfloader.bin
+ELFLOADER = $(ROOTDIR)/arm-elfloader/elfloader.bin
 
 $(ROOTDIR)/fw.img: $(OUTPUT)-strip.elf $(ELFLOADER)
 	python3 $(ROOTDIR)/castify.py $(ELFLOADER) $< $@
@@ -134,7 +134,7 @@ $(OUTPUT)-strip.elf: $(OUTPUT).elf
 $(OUTPUT).elf: $(OFILES)
 
 $(ELFLOADER):
-	@$(MAKE) -C $(ROOTDIR)/elfloader
+	@$(MAKE) -C $(ROOTDIR)/arm-elfloader
 
 
 -include $(DEPENDS)
