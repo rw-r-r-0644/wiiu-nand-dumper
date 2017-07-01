@@ -148,18 +148,18 @@ void ppc_prepare(void)
 
     // The wait stub clears this to zero before entering the wait loop.
     // Set a different value first, so we know when it enters the loop.
-    write32(0x00000000, 0xFFFFFFFF);
-    dc_flushrange((void*)0x00000000, sizeof(u32));
+    write32(0x14000000, 0xFFFFFFFF);
+    dc_flushrange((void*)0x14000000, sizeof(u32));
 
-    // Copy the wait stub to MEM1. This waits for us to load further code.
-    ppc_wait_stub(0x00000100, 0x00000000);
+    // Copy the wait stub to MEM2. This waits for us to load further code.
+    ppc_wait_stub(0x14000100, 0x14000000);
     // Copy the jump stub to the start of the ancast body. This jumps to the wait stub.
-    ppc_jump_stub(start, 0x00000100);
+    ppc_jump_stub(start, 0x14000100);
 
     // Wait for the PowerPC to enter the wait loop.
     while(true) {
-        dc_invalidaterange((void*)0x00000000, sizeof(u32));
-        if(read32(0x00000000) == 0) break;
+        dc_invalidaterange((void*)0x14000000, sizeof(u32));
+        if(read32(0x14000000) == 0) break;
     }
 
     printf("PPC: PowerPC is waiting for entry!\n");
@@ -174,8 +174,8 @@ void ppc_jump(u32 entry)
     }
 
     // Write the PowerPC entry point.
-    write32(0x00000000, entry);
-    dc_flushrange((void*)0x00000000, sizeof(u32));
+    write32(0x14000000, entry);
+    dc_flushrange((void*)0x14000000, sizeof(u32));
 
     ready = false;
 }
