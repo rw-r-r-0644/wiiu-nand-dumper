@@ -26,12 +26,17 @@
 #include "system/ppc_elf.h"
 #include "system/ppc.h"
 #include "system/memory.h"
+#include "system/irq.h"
 #include "storage/isfs.h"
 #include "common/utils.h"
+#include "storage/sd/sdcard.h"
+#include "storage/sd/fatfs/elm.h"
 
 #define PPCMSG (u32)0x0d800000
+#define PPCCTRL (u32)0x0d800004
 #define ARMCTRL (u32)0x0d80000c
 #define ARMCTRL_X1 0x4
+#define ARMCTRL_Y1 0x1
 
 void app_run() {
 	smc_wait_events(SMC_POWER_BUTTON);
@@ -43,6 +48,11 @@ void app_run() {
 		panic(0);
 	}
 	printf("[ OK ] Loaded PowerPC kernel (%d). Entry is %08lX.\n", res, ppc_entry);
+
+	ELM_Unmount();
+	sdcard_exit();
+	irq_disable(IRQ_SD0);
+	printf("[ OK ] Unmounted SD\n");
 
 	printf("--------------------------\n");
 	printf("   Spinning up PowerPC!   \n");
@@ -57,10 +67,10 @@ void app_run() {
 	int x = 0, y = 0;
 	for (;;) {
 		if (smc_get_events() & SMC_EJECT_BUTTON) break;
-		dc_invalidaterange((void*)PPCMSG, 0x100);
+		//dc_invalidaterange((void*)PPCMSG, 0x100);
 		u32 ctrl = read32(ARMCTRL);
 		if (!(ctrl & ARMCTRL_X1)) {
-			udelay(1);
+			//udelay(1);
 			continue;
 		}
 

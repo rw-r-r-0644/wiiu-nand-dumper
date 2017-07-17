@@ -65,6 +65,9 @@ void __attribute__((__noreturn__)) _main(void* base) {
 	isfs_init();
 	printf("[ OK ] Mounted SLC\n");
 
+	write32(LT_AHBPROT, 0xFFFFFFFF);
+	printf("[ OK ] Unrestricted Hardware\n");
+
 	printf("--------------------------\n");
 	printf("          Ready!          \n");
 	printf("--------------------------\n");
@@ -75,10 +78,6 @@ void __attribute__((__noreturn__)) _main(void* base) {
 	//Clean up and shut down
 	isfs_fini();
 	printf("[ OK ] Unmounted SLC\n");
-
-	ELM_Unmount();
-	sdcard_exit();
-	printf("[ OK ] Unmounted SD\n");
 
 	irq_shutdown();
 	printf("[ OK ] Removed Interrupts\n");
