@@ -56,7 +56,7 @@ void app_run() {
 
 	int x = 0, y = 0;
 	for (;;) {
-		if (smc_get_events() & SMC_POWER_BUTTON) break;
+		if (smc_get_events() & SMC_EJECT_BUTTON) break;
 		dc_invalidaterange((void*)PPCMSG, 0x100);
 		u32 ctrl = read32(ARMCTRL);
 		if (!(ctrl & ARMCTRL_X1)) {
@@ -72,7 +72,9 @@ void app_run() {
 		if (c == '\n') {
 			x = 0;
 			y += 8;
-			if (y > 700) break;
+			if (y > 700) {
+				y = 0;
+			}
 			write32(ARMCTRL, ctrl);
 			continue;
 		}
@@ -86,7 +88,9 @@ void app_run() {
 		if (x > 1250) {
 			x = 0;
 			y += 8;
-			if (y > 700) break;
+			if (y > 700) {
+				y = 0;
+			}
 		}
 		write32(ARMCTRL, ctrl);
 	}
