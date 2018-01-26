@@ -86,6 +86,6 @@ void __attribute__((__noreturn__)) _main(void* base) {
 	printf("[ OK ] Disabled caches/MMU\n");
 
 	printf("Bye!");
-
-	smc_reset();
+	
+	app_terminate();
 }

@@ -16,6 +16,7 @@ ENTRY(_start)
 __stack_size = 0x80000;
 __irqstack_size = 0x40000;
 __excstack_size = 0x40000;
+__sram_stack_size = 0x400;
 
 MEMORY {
 	sram0		: ORIGIN = 0xffff0000, LENGTH = 64K
@@ -28,6 +29,10 @@ SECTIONS
 	{
 		*(.init)
 		*(.sram.text)
+		*(.sram.data)
+		. = ALIGN(16);
+		. = . +__sram_stack_size;
+		__sram_stack_addr = .;
 		. = ALIGN(4);
 	} >sram0
 

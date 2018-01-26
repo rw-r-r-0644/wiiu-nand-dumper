@@ -24,5 +24,7 @@
 #define __APPLICATION_H__
 
 void app_run();
+void __attribute__((__noreturn__)) _app_terminate();
+extern void __attribute__((__noreturn__)) app_terminate();
 
 #endif

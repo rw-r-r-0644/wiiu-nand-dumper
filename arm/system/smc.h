@@ -28,6 +28,7 @@ int smc_set_odd_power(bool enable);
 int smc_set_cc_indicator(int state);
 int smc_set_on_indicator(int state);
 
+void __attribute__((__noreturn__)) smc_shutdown(bool reset);
 void __attribute__((__noreturn__)) smc_reset(void);
 void __attribute__((__noreturn__)) smc_power_off(void);
 

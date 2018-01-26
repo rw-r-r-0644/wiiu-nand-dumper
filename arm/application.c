@@ -27,6 +27,7 @@
 #include "system/ppc.h"
 #include "system/memory.h"
 #include "system/irq.h"
+#include "system/smc.h"
 #include "storage/isfs.h"
 #include "common/utils.h"
 #include "storage/sd/sdcard.h"
@@ -38,10 +39,11 @@
 #define ARMCTRL_X1 0x4
 #define ARMCTRL_Y1 0x1
 
+u32 SRAM_DATA ppc_entry = 0;
+
 void app_run() {
 	smc_wait_events(SMC_POWER_BUTTON);
 
-	u32 ppc_entry = 0;
 	int res = ppc_load_file("sdmc:/ppc-kernel.elf", &ppc_entry);
 	if (res < 0) {
 		printf("[FATL] Loading PowerPC kernel failed! (%d)\n", res);
@@ -53,60 +55,42 @@ void app_run() {
 	sdcard_exit();
 	irq_disable(IRQ_SD0);
 	printf("[ OK ] Unmounted SD\n");
-
-	printf("--------------------------\n");
-	printf("   Spinning up PowerPC!   \n");
-	printf("--------------------------\n");
-
+	
 	udelay(1000000);
+}
 
-	ppc_jump(ppc_entry);
+#define _READ32(addr, data) __asm__ volatile ("ldr\t%0, [%1]" : "=l" (data) : "l" (addr))
+#define _WRITE32(addr, data) __asm__ volatile ("str\t%0, [%1]" : : "l" (data), "l" (addr))
+#define _PPC_JUMP(entry) _WRITE32(0x14000000, entry)
 
-	printf("[ OK ] Span up PowerPC.\n");
+// Calling functions outside of SRAM in this function will result in a crash
+void SRAM_TEXT __attribute__((__noreturn__)) _app_terminate() {
+	// Start the kernel on the PPC
+	_PPC_JUMP(ppc_entry);
 
-	int x = 0, y = 0;
-	for (;;) {
-		if (smc_get_events() & SMC_EJECT_BUTTON) break;
-		//dc_invalidaterange((void*)PPCMSG, 0x100);
-		u32 ctrl = read32(ARMCTRL);
-		if (!(ctrl & ARMCTRL_X1)) {
-			//udelay(1);
-			continue;
-		}
-
-		char c = (char)(read32(PPCMSG) & 0xFF);
-		if (!c) {
-			write32(ARMCTRL, ctrl);
-			continue;
-		}
-		if (c == '\n') {
-			x = 0;
-			y += 8;
-			if (y > 700) {
-				y = 0;
+	while (1) {
+		u32 ctrl, cmd;
+		
+		// Read ARMCTRL -> ctrl
+		_READ32(ARMCTRL, ctrl);
+		
+		if (ctrl & ARMCTRL_X1) {
+			// Read PPCMSG -> cmd
+			_READ32(PPCMSG, cmd);
+			
+			// 0xCAFE0001: Poweroff command
+			if (cmd == 0xCAFE0001) {
+				// (smc_shutdown is in SRAM)
+				smc_shutdown(false);
 			}
-			write32(ARMCTRL, ctrl);
-			continue;
-		}
-		if (c < 32 || c >= 128) {
-			write32(ARMCTRL, ctrl);
-			continue;
-		}
-		//printf("got char: %X\n", c);
-		gfx_draw_char(GFX_TV, c, x, y, GREEN);
-		x += 8;
-		if (x > 1250) {
-			x = 0;
-			y += 8;
-			if (y > 700) {
-				y = 0;
+			
+			// 0xCAFE0002: Reboot command
+			if (cmd == 0xCAFE0002) {
+				// (smc_shutdown is in SRAM)
+				smc_shutdown(true);
 			}
+			
+			_WRITE32(ARMCTRL, ctrl);
 		}
-		write32(ARMCTRL, ctrl);
 	}
-
-	printf("done\n");
-
-	smc_wait_events(SMC_POWER_BUTTON);
-	gfx_clear(GFX_ALL, BLACK);
 }
