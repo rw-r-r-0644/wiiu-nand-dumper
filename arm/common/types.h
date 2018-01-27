@@ -40,6 +40,7 @@ typedef volatile s64 vs64;
 
 #define NULL ((void *)0)
 
+#define ALWAYS_INLINE __attribute__((always_inline))
 #define SRAM_TEXT __attribute__((section(".sram.text")))
 #define SRAM_DATA __attribute__((section(".sram.data")))
 #define NORETURN __attribute__((__noreturn__))
