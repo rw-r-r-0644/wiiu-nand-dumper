@@ -17,7 +17,7 @@
 .globl _drain_write_buffer
 .globl _tlb_inval
 
-.text
+.section .sram.text
 
 _dc_inval_entries:
     mcr     p15, 0, r0, c7, c6, 1
@@ -57,4 +57,3 @@ _tlb_inval:
     mov     r0, #0
     mcr     p15, 0, r0, c8, c7
     bx      lr
-

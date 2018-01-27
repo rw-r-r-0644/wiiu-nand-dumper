@@ -33,7 +33,7 @@ DATA				:=
 #---------------------------------------------------------------------------------
 ARCH			:=	-march=armv5te -mcpu=arm926ej-s -marm -mthumb-interwork -mbig-endian -mfloat-abi=soft
 
-CFLAGS			:=	-g -std=c11 -Wall -O3 \
+CFLAGS			:=	-g -std=c11 -Wall -Werror -O3 \
 					-fomit-frame-pointer -ffunction-sections \
 					$(ARCH)
 

@@ -35,7 +35,7 @@
 #include "system/latte.h"
 #include "common/utils.h"
 
-void __attribute__((__noreturn__)) _main(void* base) {
+void NORETURN _main(void* base) {
 	gfx_clear(GFX_ALL, BLACK);
 	printf("Hello World!\n");
 
@@ -74,18 +74,4 @@ void __attribute__((__noreturn__)) _main(void* base) {
 	//We're good to go!
 
 	app_run();
-
-	//Clean up and shut down
-	isfs_fini();
-	printf("[ OK ] Unmounted SLC\n");
-
-	irq_shutdown();
-	printf("[ OK ] Removed Interrupts\n");
-
-	mem_shutdown();
-	printf("[ OK ] Disabled caches/MMU\n");
-
-	printf("Bye!");
-	
-	app_terminate();
 }

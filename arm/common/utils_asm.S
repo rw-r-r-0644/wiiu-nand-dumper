@@ -16,7 +16,7 @@
 .globl memset16
 .globl memset8
 
-.text
+.section .sram.text
 
 memcpy32:
     bics    r2, #3
@@ -68,4 +68,3 @@ memset8:
     subs    r2, #1
     bne     1b
     bx      lr
-

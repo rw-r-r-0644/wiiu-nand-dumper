@@ -40,8 +40,10 @@ typedef volatile s64 vs64;
 
 #define NULL ((void *)0)
 
+#define ALWAYS_INLINE __attribute__((always_inline))
 #define SRAM_TEXT __attribute__((section(".sram.text")))
 #define SRAM_DATA __attribute__((section(".sram.data")))
+#define NORETURN __attribute__((__noreturn__))
 
 #define ALIGNED(x) __attribute__((aligned(x)))
 #define PACKED __attribute__((packed))
@@ -64,4 +66,3 @@ typedef volatile s64 vs64;
 //#define ULLONG_MAX ((u64)0xffffffffffffffff)
 
 #endif
-

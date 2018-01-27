@@ -12,19 +12,19 @@
 
 #include "types.h"
 
-static inline u32 read32(u32 addr)
+static inline ALWAYS_INLINE u32 read32(u32 addr)
 {
     u32 data;
     __asm__ volatile ("ldr\t%0, [%1]" : "=l" (data) : "l" (addr));
     return data;
 }
 
-static inline void write32(u32 addr, u32 data)
+static inline ALWAYS_INLINE void write32(u32 addr, u32 data)
 {
     __asm__ volatile ("str\t%0, [%1]" : : "l" (data), "l" (addr));
 }
 
-static inline u32 set32(u32 addr, u32 set)
+static inline ALWAYS_INLINE u32 set32(u32 addr, u32 set)
 {
     u32 data;
     __asm__ volatile (
@@ -37,7 +37,7 @@ static inline u32 set32(u32 addr, u32 set)
     return data;
 }
 
-static inline u32 clear32(u32 addr, u32 clear)
+static inline ALWAYS_INLINE u32 clear32(u32 addr, u32 clear)
 {
     u32 data;
     __asm__ volatile (
@@ -51,7 +51,7 @@ static inline u32 clear32(u32 addr, u32 clear)
 }
 
 
-static inline u32 mask32(u32 addr, u32 clear, u32 set)
+static inline ALWAYS_INLINE u32 mask32(u32 addr, u32 clear, u32 set)
 {
     u32 data;
     __asm__ volatile (
@@ -65,19 +65,19 @@ static inline u32 mask32(u32 addr, u32 clear, u32 set)
     return data;
 }
 
-static inline u16 read16(u32 addr)
+static inline ALWAYS_INLINE u16 read16(u32 addr)
 {
     u32 data;
     __asm__ volatile ("ldrh\t%0, [%1]" : "=l" (data) : "l" (addr));
     return data;
 }
 
-static inline void write16(u32 addr, u16 data)
+static inline ALWAYS_INLINE void write16(u32 addr, u16 data)
 {
     __asm__ volatile ("strh\t%0, [%1]" : : "l" (data), "l" (addr));
 }
 
-static inline u16 set16(u32 addr, u16 set)
+static inline ALWAYS_INLINE u16 set16(u32 addr, u16 set)
 {
     u16 data;
     __asm__ volatile (
@@ -91,7 +91,7 @@ static inline u16 set16(u32 addr, u16 set)
     return data;
 }
 
-static inline u16 clear16(u32 addr, u16 clear)
+static inline ALWAYS_INLINE u16 clear16(u32 addr, u16 clear)
 {
     u16 data;
     __asm__ volatile (
@@ -105,7 +105,7 @@ static inline u16 clear16(u32 addr, u16 clear)
 }
 
 
-static inline u16 mask16(u32 addr, u16 clear, u16 set)
+static inline ALWAYS_INLINE u16 mask16(u32 addr, u16 clear, u16 set)
 {
     u16 data;
     __asm__ volatile (
@@ -119,19 +119,19 @@ static inline u16 mask16(u32 addr, u16 clear, u16 set)
     return data;
 }
 
-static inline u8 read8(u32 addr)
+static inline ALWAYS_INLINE u8 read8(u32 addr)
 {
     u32 data;
     __asm__ volatile ("ldrb\t%0, [%1]" : "=l" (data) : "l" (addr));
     return data;
 }
 
-static inline void write8(u32 addr, u8 data)
+static inline ALWAYS_INLINE void write8(u32 addr, u8 data)
 {
     __asm__ volatile ("strb\t%0, [%1]" : : "l" (data), "l" (addr));
 }
 
-static inline u8 set8(u32 addr, u8 set)
+static inline ALWAYS_INLINE u8 set8(u32 addr, u8 set)
 {
     u8 data;
     __asm__ volatile (
@@ -144,7 +144,7 @@ static inline u8 set8(u32 addr, u8 set)
     return data;
 }
 
-static inline u8 clear8(u32 addr, u8 clear)
+static inline ALWAYS_INLINE u8 clear8(u32 addr, u8 clear)
 {
     u8 data;
     __asm__ volatile (
@@ -157,7 +157,7 @@ static inline u8 clear8(u32 addr, u8 clear)
     return data;
 }
 
-static inline u8 mask8(u32 addr, u8 clear, u8 set)
+static inline ALWAYS_INLINE u8 mask8(u32 addr, u8 clear, u8 set)
 {
     u8 data;
     __asm__ volatile (
@@ -186,7 +186,7 @@ void hexdump(const void *d, int len);
 void udelay(u32 d);
 void panic(u8 v);
 
-static inline u32 get_cpsr(void)
+static inline ALWAYS_INLINE u32 get_cpsr(void)
 {
     u32 data;
     __asm__ volatile ( "mrs\t%0, cpsr" : "=r" (data) );
