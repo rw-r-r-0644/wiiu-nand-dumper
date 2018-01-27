@@ -21,29 +21,53 @@
  */
 
 #include <stdio.h>
+
 #include "system/smc.h"
-#include "video/gfx.h"
 #include "system/ppc_elf.h"
-#include "system/ppc.h"
 #include "system/memory.h"
 #include "system/irq.h"
 #include "system/smc.h"
+#include "system/latte.h"
 #include "storage/isfs.h"
 #include "common/utils.h"
 #include "storage/sd/sdcard.h"
 #include "storage/sd/fatfs/elm.h"
 
-#define PPCMSG (u32)0x0d800000
-#define PPCCTRL (u32)0x0d800004
-#define ARMCTRL (u32)0x0d80000c
-#define ARMCTRL_X1 0x4
-#define ARMCTRL_Y1 0x1
+#include "application.h"
+#include "ipc_protocol.h"
+
+#define LT_IPC_ARMCTRL_COMPAT_X1 0x4
+#define LT_IPC_ARMCTRL_COMPAT_Y1 0x1
 
 u32 SRAM_DATA ppc_entry = 0;
 
-void app_run() {
-	smc_wait_events(SMC_POWER_BUTTON);
+static void SRAM_TEXT NORETURN app_run_sram() {
+	//Uncomment to completely erase linux-loader from MEM2
+	//memset32((void*)0x10000000, 0, 0x800000);
 
+	//Start the PowerPC
+	write32(0x14000000, ppc_entry);
+	for (;;) {
+		//check for message sent flag
+		u32 ctrl = read32(LT_IPC_ARMCTRL_COMPAT);
+		if (!(ctrl & LT_IPC_ARMCTRL_COMPAT_X1)) continue;
+
+		//read PowerPC's message
+		u32 msg = read32(LT_IPC_PPCMSG_COMPAT);
+
+		//process commands
+		if (msg == CMD_POWEROFF) {
+			smc_shutdown(false);
+		} else if (msg == CMD_REBOOT) {
+			smc_shutdown(true);
+		}
+
+		//writeback ctrl value to reset IPC
+		write32(LT_IPC_ARMCTRL_COMPAT, ctrl);
+	}
+}
+
+void NORETURN app_run() {
 	int res = ppc_load_file("sdmc:/ppc-kernel.elf", &ppc_entry);
 	if (res < 0) {
 		printf("[FATL] Loading PowerPC kernel failed! (%d)\n", res);
@@ -51,46 +75,18 @@ void app_run() {
 	}
 	printf("[ OK ] Loaded PowerPC kernel (%d). Entry is %08lX.\n", res, ppc_entry);
 
+	//Shut everything down, ready for SRAM switch
 	ELM_Unmount();
 	sdcard_exit();
 	irq_disable(IRQ_SD0);
-	printf("[ OK ] Unmounted SD\n");
-	
-	udelay(1000000);
-}
+	isfs_fini();
+	irq_shutdown();
+	printf("[ OK ] Unmounted filesystems and removed interrupts.\n");
+	mem_shutdown();
+	printf("[ OK ] Disabled caches/MMU\n");
 
-#define _READ32(addr, data) __asm__ volatile ("ldr\t%0, [%1]" : "=l" (data) : "l" (addr))
-#define _WRITE32(addr, data) __asm__ volatile ("str\t%0, [%1]" : : "l" (data), "l" (addr))
-#define _PPC_JUMP(entry) _WRITE32(0x14000000, entry)
+	printf("[BYE ] Doing SRAM context switch...\n");
 
-// Calling functions outside of SRAM in this function will result in a crash
-void SRAM_TEXT __attribute__((__noreturn__)) _app_terminate() {
-	// Start the kernel on the PPC
-	_PPC_JUMP(ppc_entry);
-
-	while (1) {
-		u32 ctrl, cmd;
-		
-		// Read ARMCTRL -> ctrl
-		_READ32(ARMCTRL, ctrl);
-		
-		if (ctrl & ARMCTRL_X1) {
-			// Read PPCMSG -> cmd
-			_READ32(PPCMSG, cmd);
-			
-			// 0xCAFE0001: Poweroff command
-			if (cmd == 0xCAFE0001) {
-				// (smc_shutdown is in SRAM)
-				smc_shutdown(false);
-			}
-			
-			// 0xCAFE0002: Reboot command
-			if (cmd == 0xCAFE0002) {
-				// (smc_shutdown is in SRAM)
-				smc_shutdown(true);
-			}
-			
-			_WRITE32(ARMCTRL, ctrl);
-		}
-	}
+	//Move execution to SRAM. Linux will overwrite everything in MEM2, including this code.
+	sram_ctx_switch(&app_run_sram);
 }

@@ -20,12 +20,10 @@
  *	see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
  */
 
-#ifndef __APPLICATION_H__
-#define __APPLICATION_H__
+#ifndef __IPC_PROTOCOL_H__
+#define __IPC_PROTOCOL_H__
 
-#include "common/types.h"
+#define CMD_POWEROFF 0xCAFE0001
+#define CMD_REBOOT 0xCAFE0002
 
-void NORETURN app_run();
-extern void NORETURN sram_ctx_switch(void (*sram_func)());
-
-#endif
+#endif //__IPC_PROTOCOL_H__
