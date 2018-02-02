@@ -68,7 +68,7 @@ static void SRAM_TEXT NORETURN app_run_sram() {
 }
 
 void NORETURN app_run() {
-	int res = ppc_load_file("sdmc:/ppc-kernel.elf", &ppc_entry);
+	int res = ppc_load_file("sdmc:/linux/kernel", &ppc_entry);
 	if (res < 0) {
 		printf("[FATL] Loading PowerPC kernel failed! (%d)\n", res);
 		panic(0);
