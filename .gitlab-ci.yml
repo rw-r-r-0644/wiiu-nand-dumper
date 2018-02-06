@@ -5,8 +5,8 @@ master-build:
     only:
     - master
     script:
-    - sed 's/B5XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/${DEFINITELY_LEGAL}/g' -i castify.py
-    - sed 's/91XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/${DO_THEY_EVEN_CARE}/g' -i castify.py
+    - sed s/B5XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/${DEFINITELY_LEGAL}/g -i castify.py
+    - sed s/91XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/${DO_THEY_EVEN_CARE}/g -i castify.py
     - make
     artifacts:
         paths:
