@@ -638,7 +638,7 @@ static int _isfsdev_stat_r(struct _reent* r, const char* file, struct stat* st)
     return 0;
 }
 
-static ssize_t _isfsdev_read_r(struct _reent* r, int fd, char* ptr, size_t len)
+static ssize_t _isfsdev_read_r(struct _reent* r, void* fd, char* ptr, size_t len)
 {
     isfs_file* fp = (isfs_file*) fd;
 
@@ -670,7 +670,7 @@ static int _isfsdev_open_r(struct _reent* r, void* fileStruct, const char* path,
     return 0;
 }
 
-static off_t _isfsdev_seek_r(struct _reent* r, int fd, off_t pos, int dir)
+static off_t _isfsdev_seek_r(struct _reent* r, void* fd, off_t pos, int dir)
 {
     isfs_file* fp = (isfs_file*) fd;
 
@@ -684,7 +684,7 @@ static off_t _isfsdev_seek_r(struct _reent* r, int fd, off_t pos, int dir)
     return fp->offset;
 }
 
-static int _isfsdev_close_r(struct _reent* r, int fd)
+static int _isfsdev_close_r(struct _reent* r, void* fd)
 {
     isfs_file* fp = (isfs_file*) fd;
 
@@ -843,7 +843,7 @@ void isfsdev_test_dir(void)
                 goto isfsdir_exit;
             }
 
-            printf("%s, %s, size 0x%lX\n", entry->d_name, info.st_mode & S_IFDIR ? "dir" : "file", info.st_size);
+            printf("%s, %s, size 0x%llX\n", entry->d_name, info.st_mode & S_IFDIR ? "dir" : "file", info.st_size);
         }
 
         res = closedir(dir);

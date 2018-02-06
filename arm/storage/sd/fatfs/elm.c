@@ -44,11 +44,11 @@ static devoptab_t devoptab = {0};
 static const char* mount = "sdmc";
 
 int _ELM_open_r(struct _reent *r, void *fileStruct, const char *path, int flags, int mode);
-int _ELM_close_r(struct _reent *r, int fd);
-ssize_t _ELM_write_r(struct _reent *r, int fd, const char *ptr, size_t len);
-ssize_t _ELM_read_r(struct _reent *r, int fd, char *ptr, size_t len);
-off_t _ELM_seek_r(struct _reent *r, int fd, off_t pos, int dir);
-int _ELM_fstat_r(struct _reent *r, int fd, struct stat *st);
+int _ELM_close_r(struct _reent *r, void* fd);
+ssize_t _ELM_write_r(struct _reent *r, void* fd, const char *ptr, size_t len);
+ssize_t _ELM_read_r(struct _reent *r, void* fd, char *ptr, size_t len);
+off_t _ELM_seek_r(struct _reent *r, void* fd, off_t pos, int dir);
+int _ELM_fstat_r(struct _reent *r, void* fd, struct stat *st);
 int _ELM_stat_r(struct _reent *r, const char *file, struct stat *st);
 int _ELM_link_r(struct _reent *r, const char *existing, const char *newLink);
 int _ELM_unlink_r(struct _reent *r, const char *name);
@@ -60,8 +60,8 @@ int _ELM_dirreset_r(struct _reent *r, DIR_ITER *dirState);
 int _ELM_dirnext_r(struct _reent *r, DIR_ITER *dirState, char *filename, struct stat *filestat);
 int _ELM_dirclose_r(struct _reent *r, DIR_ITER *dirState);
 int _ELM_statvfs_r(struct _reent *r, const char *path, struct statvfs *buf);
-int _ELM_ftruncate_r(struct _reent *r, int fd, off_t len);
-int _ELM_fsync_r(struct _reent *r, int fd);
+int _ELM_ftruncate_r(struct _reent *r, void* fd, off_t len);
+int _ELM_fsync_r(struct _reent *r, void* fd);
 
 static TCHAR CvtBuf[_MAX_LFN + 1];
 
@@ -139,7 +139,9 @@ static TCHAR* _ELM_mbstoucs2(const char* src, size_t* len)
     int bytes;
     TCHAR* dst = CvtBuf;
 
-    while (src != '\0')
+/*  Ash 2018-02-06: changing this from src to *src. Seems logical, stops
+    compiler warnings. TODO: watch this for issues. */
+    while (*src != '\0')
     {
         bytes = mbrtowc(&tempChar, src, MB_CUR_MAX, &ps);
 
@@ -305,14 +307,14 @@ int _ELM_open_r(struct _reent* r, void* fileStruct, const char* path, int flags,
     return _ELM_errnoparse(r, (int) fp, -1);
 }
 
-int _ELM_close_r(struct _reent* r, int fd)
+int _ELM_close_r(struct _reent* r, void* fd)
 {
     FIL* fp = (FIL*) fd;
     elm_error = f_close(fp);
     return _ELM_errnoparse(r, 0, -1);
 }
 
-ssize_t _ELM_write_r(struct _reent* r, int fd, const char* ptr, size_t len)
+ssize_t _ELM_write_r(struct _reent* r, void* fd, const char* ptr, size_t len)
 {
 #if !_FS_READONLY
     FIL* fp = (FIL*) fd;
@@ -327,7 +329,7 @@ ssize_t _ELM_write_r(struct _reent* r, int fd, const char* ptr, size_t len)
 #endif
 }
 
-ssize_t _ELM_read_r(struct _reent* r, int fd, char* ptr, size_t len)
+ssize_t _ELM_read_r(struct _reent* r, void* fd, char* ptr, size_t len)
 {
     FIL* fp = (FIL*) fd;
     unsigned int read;
@@ -335,7 +337,7 @@ ssize_t _ELM_read_r(struct _reent* r, int fd, char* ptr, size_t len)
     return _ELM_errnoparse(r, read, -1);
 }
 
-off_t _ELM_seek_r(struct _reent* r, int fd, off_t pos, int dir)
+off_t _ELM_seek_r(struct _reent* r, void* fd, off_t pos, int dir)
 {
 #if _FS_MINIMIZE < 3
     FIL* fp = (FIL*) fd;
@@ -362,7 +364,7 @@ off_t _ELM_seek_r(struct _reent* r, int fd, off_t pos, int dir)
 #endif
 }
 
-int _ELM_fstat_r(struct _reent* r, int fd, struct stat* st)
+int _ELM_fstat_r(struct _reent* r, void* fd, struct stat* st)
 {
     r->_errno = ENOSYS;
     return -1;
@@ -648,7 +650,7 @@ int _ELM_statvfs_r(struct _reent* r, const char* path, struct statvfs* buf)
     return -1;
 }
 
-int _ELM_ftruncate_r(struct _reent* r, int fd, off_t len)
+int _ELM_ftruncate_r(struct _reent* r, void* fd, off_t len)
 {
 #if (_FS_MINIMIZE < 1) && (!_FS_READONLY)
     FIL* fp = (FIL*) fd;
@@ -675,7 +677,7 @@ int _ELM_ftruncate_r(struct _reent* r, int fd, off_t len)
 #endif
 }
 
-int _ELM_fsync_r(struct _reent* r, int fd)
+int _ELM_fsync_r(struct _reent* r, void* fd)
 {
 #if !_FS_READONLY
     elm_error = f_sync((FIL*) fd);
