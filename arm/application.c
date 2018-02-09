@@ -21,6 +21,7 @@
  */
 
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "system/smc.h"
 #include "system/ppc_elf.h"
@@ -38,6 +39,11 @@
 
 #define LT_IPC_ARMCTRL_COMPAT_X1 0x4
 #define LT_IPC_ARMCTRL_COMPAT_Y1 0x1
+
+static const char* kernel_locs[] = {
+	"sdmc:/linux/dtbImage.wiiu",
+	"sdmc:/linux/kernel"
+};
 
 u32 SRAM_DATA ppc_entry = 0;
 
@@ -68,8 +74,19 @@ static void SRAM_TEXT NORETURN app_run_sram() {
 }
 
 void NORETURN app_run() {
-	int res = ppc_load_file("sdmc:/linux/kernel", &ppc_entry);
-	if (res < 0) {
+	int res;
+	bool kernel_loaded = false;
+
+	for (int i = 0; i < sizeof(kernel_locs) / sizeof(const char*); i++) {
+		printf("[INFO] Trying to load kernel from %s...\n", kernel_locs[i]);
+		res = ppc_load_file(kernel_locs[i], &ppc_entry);
+		if (res >= 0) {
+			kernel_loaded = true;
+			break;
+		}
+	}
+
+	if (!kernel_loaded) {
 		printf("[FATL] Loading PowerPC kernel failed! (%d)\n", res);
 		panic(0);
 	}
