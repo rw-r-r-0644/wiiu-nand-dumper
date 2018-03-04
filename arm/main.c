@@ -66,6 +66,8 @@ void NORETURN _main(void* base) {
 	printf("[ OK ] Mounted SLC\n");
 
 	write32(LT_AHBPROT, 0xFFFFFFFF);
+	write32(LT_GPIO_ENABLE, 0xFFFFFFFF);
+	write32(LT_GPIO_OWNER, 0xFFFFFFFF);
 	printf("[ OK ] Unrestricted Hardware\n");
 
 	printf("--------------------------\n");
