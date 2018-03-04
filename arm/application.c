@@ -21,6 +21,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <stdbool.h>
 
 #include "system/smc.h"
@@ -33,17 +34,37 @@
 #include "common/utils.h"
 #include "storage/sd/sdcard.h"
 #include "storage/sd/fatfs/elm.h"
+#include "common/ini.h"
 
 #include "application.h"
 #include "ipc_protocol.h"
-
-#define LT_IPC_ARMCTRL_COMPAT_X1 0x4
-#define LT_IPC_ARMCTRL_COMPAT_Y1 0x1
 
 static const char* kernel_locs[] = {
 	"sdmc:/linux/dtbImage.wiiu",
 	"sdmc:/linux/kernel"
 };
+
+struct LoaderConfig {
+	char defaultProfile[64];
+};
+static struct LoaderConfig ldrConfig = { 0 };
+
+#define NUM_PROFILES 4
+struct ProfileConfig {
+	bool enabled;
+	char name[64];
+	char humanName[64];
+	char kernelPath[128];
+	char kernelCmd[256];
+};
+static struct ProfileConfig profiles[NUM_PROFILES] = { false };
+
+#define CMDLINE_CANARY_LOC 0x89200000
+#define CMDLINE_CANARY_MAGIC (unsigned int)0xCAFEFECA
+#define CMDLINE_LOC (char*)0x89200004
+
+#define LT_IPC_ARMCTRL_COMPAT_X1 0x4
+#define LT_IPC_ARMCTRL_COMPAT_Y1 0x1
 
 u32 SRAM_DATA ppc_entry = 0;
 
@@ -73,18 +94,90 @@ static void SRAM_TEXT NORETURN app_run_sram() {
 	}
 }
 
+static size_t search_for_profile(const char* name) {
+/*	Check if the profile exists */
+	for (size_t i = 0; i < NUM_PROFILES; i++) {
+		if (profiles[i].enabled) {
+			if (strcmp(name, profiles[i].name) == 0) {
+				return i;
+			}
+		}
+	}
+/*	If not, find the first unused slot and initialise it */
+	for (size_t i = 0; i < NUM_PROFILES; i++) {
+		if (!profiles[i].enabled) {
+			strncpy(profiles[i].name, name, sizeof(profiles[i].name));
+			profiles[i].enabled = true;
+			return i;
+		}
+	}
+	return ~0;
+}
+
+static int config_handler(void* user, const char* section, const char* name, const char* value) {
+	if (strcmp("loader", section) == 0) {
+		if (strcmp("default", name) == 0) {
+			strncpy(ldrConfig.defaultProfile, value, sizeof(ldrConfig.defaultProfile));
+		}
+	} else if (strncmp("profile:", section, 8) == 0) {
+		size_t ndx = search_for_profile(section + 8);
+		if (ndx == ~0) {
+			printf("Couldn't allocate profile for %s\n", section);
+			return 0;
+		}
+		if (strcmp("name", name) == 0) {
+			strncpy(profiles[ndx].humanName, value, sizeof(profiles[ndx].humanName));
+		} else if (strcmp("kernel", name) == 0) {
+			strncpy(profiles[ndx].kernelPath, value, sizeof(profiles[ndx].kernelPath));
+		} else if (strcmp("cmdline", name) == 0) {
+			strncpy(profiles[ndx].kernelCmd, value, sizeof(profiles[ndx].kernelCmd));
+		}
+	}
+	return 1;
+}
+
 void NORETURN app_run() {
 	int res;
 	bool kernel_loaded = false;
 
-	for (int i = 0; i < sizeof(kernel_locs) / sizeof(const char*); i++) {
-		printf("[INFO] Trying to load kernel from %s...\n", kernel_locs[i]);
-		res = ppc_load_file(kernel_locs[i], &ppc_entry);
-		if (res >= 0) {
-			kernel_loaded = true;
+/*	It doesn't really matter if this fails */
+	ini_parse("sdmc:/linux/boot.cfg", &config_handler, NULL);
+
+/*	Find the user-selected default profile */
+	size_t profileNdx;
+	bool profileFound = false;
+	for (profileNdx = 0; profileNdx < NUM_PROFILES; profileNdx++) {
+		if (!profiles[profileNdx].enabled) continue;
+		if (strcmp(ldrConfig.defaultProfile, profiles[profileNdx].name) == 0) {
+			profileFound = true;
 			break;
 		}
 	}
+
+/*	Load kernel according to config file profile */
+	if (profileFound) {
+		printf("[INFO] %d Trying to load kernel from %s...\n", profileNdx, profiles[profileNdx].kernelPath);
+		res = ppc_load_file(profiles[profileNdx].kernelPath, &ppc_entry);
+		if (res >= 0) kernel_loaded = true;
+
+	/*	Put kernel commandline at end of memory, ready for the boot wrapper to read */
+		if (strlen(profiles[profileNdx].kernelCmd) > 0) {
+			strncpy(CMDLINE_LOC, profiles[profileNdx].kernelCmd, sizeof(profiles[profileNdx].kernelCmd));
+			write32(CMDLINE_CANARY_LOC, CMDLINE_CANARY_MAGIC);
+		}
+	}
+
+/*	If that failed, use the default kernel locations */
+	if (!kernel_loaded) {
+		for (int i = 0; i < sizeof(kernel_locs) / sizeof(const char*); i++) {
+			printf("[INFO] Trying to load kernel from %s...\n", kernel_locs[i]);
+			res = ppc_load_file(kernel_locs[i], &ppc_entry);
+			if (res >= 0) {
+				kernel_loaded = true;
+				break;
+			}
+		}
+	}	
 
 	if (!kernel_loaded) {
 		printf("[FATL] Loading PowerPC kernel failed! (%d)\n", res);
