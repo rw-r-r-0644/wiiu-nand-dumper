@@ -59,9 +59,19 @@ struct ProfileConfig {
 };
 static struct ProfileConfig profiles[NUM_PROFILES] = { false };
 
-#define CMDLINE_CANARY_LOC 0x89200000
-#define CMDLINE_CANARY_MAGIC (unsigned int)0xCAFEFECA
-#define CMDLINE_LOC (char*)0x89200004
+/* If this struct ever has to be changed in a non-ABI compatible way,
+   change the magic.
+   Past magics:
+    - 0xCAFEFECA: initial version
+*/
+#define WIIU_LOADER_MAGIC 0xCAFEFECA
+struct wiiu_ppc_data {
+	unsigned int magic;
+	char cmdline[256];
+	void* initrd;
+	unsigned int initrd_sz;
+};
+static struct wiiu_ppc_data* ppc_data = (void*)0x89200000;
 
 #define LT_IPC_ARMCTRL_COMPAT_X1 0x4
 #define LT_IPC_ARMCTRL_COMPAT_Y1 0x1
@@ -140,6 +150,9 @@ void NORETURN app_run() {
 	int res;
 	bool kernel_loaded = false;
 
+/*	Clear out the PowerPC comms area */
+	memset(ppc_data, 0, sizeof(*ppc_data));
+
 /*	It doesn't really matter if this fails */
 	ini_parse("sdmc:/linux/boot.cfg", &config_handler, NULL);
 
@@ -156,19 +169,20 @@ void NORETURN app_run() {
 
 /*	Load kernel according to config file profile */
 	if (profileFound) {
-		printf("[INFO] %d Trying to load kernel from %s...\n", profileNdx, profiles[profileNdx].kernelPath);
+		printf("[INFO] Trying to load kernel from %s...\n", profiles[profileNdx].kernelPath);
 		res = ppc_load_file(profiles[profileNdx].kernelPath, &ppc_entry);
 		if (res >= 0) kernel_loaded = true;
 
 	/*	Put kernel commandline at end of memory, ready for the boot wrapper to read */
 		if (strlen(profiles[profileNdx].kernelCmd) > 0) {
-			strncpy(CMDLINE_LOC, profiles[profileNdx].kernelCmd, sizeof(profiles[profileNdx].kernelCmd));
-			write32(CMDLINE_CANARY_LOC, CMDLINE_CANARY_MAGIC);
+			strncpy(ppc_data->cmdline, profiles[profileNdx].kernelCmd, sizeof(ppc_data->cmdline));
+			write32((unsigned int)&ppc_data->magic, WIIU_LOADER_MAGIC);
 		}
 	}
 
 /*	If that failed, use the default kernel locations */
 	if (!kernel_loaded) {
+	/*	Try each deafault location */
 		for (int i = 0; i < sizeof(kernel_locs) / sizeof(const char*); i++) {
 			printf("[INFO] Trying to load kernel from %s...\n", kernel_locs[i]);
 			res = ppc_load_file(kernel_locs[i], &ppc_entry);
@@ -177,7 +191,7 @@ void NORETURN app_run() {
 				break;
 			}
 		}
-	}	
+	}
 
 	if (!kernel_loaded) {
 		printf("[FATL] Loading PowerPC kernel failed! (%d)\n", res);
