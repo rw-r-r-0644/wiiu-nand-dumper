@@ -24,7 +24,7 @@ struct {
 
 	int current_y;
 	int current_x;
-} fbs[GFX_ALL] = {
+} fbs[GFX_ALL] SRAM_DATA = {
 	[GFX_TV] =
 	{
 		.ptr = (u32*)(0x14000000 + 0x3500000),
@@ -47,21 +47,21 @@ struct {
 	},
 };
 
-size_t gfx_get_stride(gfx_screen_t screen)
+size_t SRAM_TEXT gfx_get_stride(gfx_screen_t screen)
 {
 	if(screen == GFX_ALL) return 0;
 
 	return fbs[screen].bpp * fbs[screen].width;
 }
 
-size_t gfx_get_size(gfx_screen_t screen)
+size_t SRAM_TEXT gfx_get_size(gfx_screen_t screen)
 {
 	if(screen == GFX_ALL) return 0;
 
 	return gfx_get_stride(screen) * fbs[screen].height;
 }
 
-void gfx_draw_plot(gfx_screen_t screen, int x, int y, u32 color)
+void SRAM_TEXT gfx_draw_plot(gfx_screen_t screen, int x, int y, u32 color)
 {
 	if(screen == GFX_ALL) {
 		for(int i = 0; i < GFX_ALL; i++)
@@ -72,7 +72,7 @@ void gfx_draw_plot(gfx_screen_t screen, int x, int y, u32 color)
 	}
 }
 
-void gfx_clear(gfx_screen_t screen, u32 color)
+void SRAM_TEXT gfx_clear(gfx_screen_t screen, u32 color)
 {
 	if(screen == GFX_ALL) {
 		for(int i = 0; i < GFX_ALL; i++)
@@ -86,7 +86,7 @@ void gfx_clear(gfx_screen_t screen, u32 color)
 	}
 }
 
-void gfx_draw_char(gfx_screen_t screen, char c, int x, int y, u32 color)
+void SRAM_TEXT gfx_draw_char(gfx_screen_t screen, char c, int x, int y, u32 color)
 {
 	if(screen == GFX_ALL) {
 		for(int i = 0; i < GFX_ALL; i++)
@@ -114,7 +114,7 @@ void gfx_draw_char(gfx_screen_t screen, char c, int x, int y, u32 color)
 	}
 }
 
-void gfx_draw_string(gfx_screen_t screen, char* str, int x, int y, u32 color)
+void SRAM_TEXT gfx_draw_string(gfx_screen_t screen, char* str, int x, int y, u32 color)
 {
 	if(screen == GFX_ALL) {
 		for(int i = 0; i < GFX_ALL; i++)
@@ -137,6 +137,17 @@ void gfx_draw_string(gfx_screen_t screen, char* str, int x, int y, u32 color)
 			}
 		}
 	}
+}
+
+void SRAM_TEXT sram_print(char* msg) {
+	int lines = 0;
+	for (int k = 0; msg[k]; k++) {
+		if (msg[k] == '\n') lines += 10;
+	}
+	if (fbs[GFX_DRC].current_y + lines >= fbs[GFX_DRC].height - 20) {
+		gfx_clear(GFX_DRC, BLACK);
+	}
+	gfx_draw_string(GFX_DRC, msg, 10, fbs[GFX_DRC].current_y, GREEN);
 }
 
 // This sucks, should use a stdout devoptab.

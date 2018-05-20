@@ -24,6 +24,7 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include "video/gfx.h"
 #include "system/smc.h"
 #include "system/ppc_elf.h"
 #include "system/memory.h"
@@ -97,6 +98,12 @@ static void SRAM_TEXT NORETURN app_run_sram() {
 			smc_shutdown(false);
 		} else if (msg == CMD_REBOOT) {
 			smc_shutdown(true);
+		} else if ((msg & CMD_MASK) == CMD_PRINT) {
+			char buf[3];
+			buf[0] = (msg & 0x00FF0000) >> 16;
+			buf[1] = (msg & 0x0000FF00) >>  8;
+			buf[2] = (msg & 0x000000FF) >>  0;
+			sram_print(buf);
 		}
 
 		//writeback ctrl value to reset IPC
