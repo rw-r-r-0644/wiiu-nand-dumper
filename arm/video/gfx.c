@@ -141,13 +141,21 @@ void SRAM_TEXT gfx_draw_string(gfx_screen_t screen, char* str, int x, int y, u32
 
 void SRAM_TEXT sram_print(char* msg) {
 	int lines = 0;
+	int width = fbs[GFX_DRC].current_x;
 	for (int k = 0; msg[k]; k++) {
-		if (msg[k] == '\n') lines += 10;
+		width += CHAR_SIZE_X;
+		if (msg[k] == '\n') {
+			lines += 10;
+			width = 0;
+		}
 	}
 	if (fbs[GFX_DRC].current_y + lines >= fbs[GFX_DRC].height - 20) {
 		gfx_clear(GFX_DRC, BLACK);
 	}
-	gfx_draw_string(GFX_DRC, msg, 10, fbs[GFX_DRC].current_y, GREEN);
+	gfx_draw_string(GFX_DRC, msg, fbs[GFX_DRC].current_x, fbs[GFX_DRC].current_y, GREEN);
+
+	fbs[GFX_DRC].current_y += lines;
+	fbs[GFX_DRC].current_x = width;
 }
 
 // This sucks, should use a stdout devoptab.
@@ -180,5 +188,5 @@ int printf(const char* fmt, ...)
 		fbs[i].current_y += lines;
 	}
 
-    return 0;
+	return 0;
 }

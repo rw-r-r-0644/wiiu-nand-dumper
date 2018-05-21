@@ -82,7 +82,7 @@ u32 SRAM_DATA ppc_entry = 0;
 static void SRAM_TEXT NORETURN app_run_sram() {
 	//Uncomment to completely erase linux-loader from MEM2
 	//memset32((void*)0x10000000, 0, 0x800000);
-
+	gfx_clear(GFX_DRC, BLACK);
 	//Start the PowerPC
 	write32(0x14000000, ppc_entry);
 	for (;;) {
@@ -99,10 +99,11 @@ static void SRAM_TEXT NORETURN app_run_sram() {
 		} else if (msg == CMD_REBOOT) {
 			smc_shutdown(true);
 		} else if ((msg & CMD_MASK) == CMD_PRINT) {
-			char buf[3];
+			char buf[4];
 			buf[0] = (msg & 0x00FF0000) >> 16;
 			buf[1] = (msg & 0x0000FF00) >>  8;
 			buf[2] = (msg & 0x000000FF) >>  0;
+			buf[3] = '\0';
 			sram_print(buf);
 		}
 
