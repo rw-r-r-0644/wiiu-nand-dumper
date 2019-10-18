@@ -57,6 +57,8 @@ void NORETURN _main(void* base) {
 
 	int res = ELM_Mount();
 	if (res) {
+		char errorstr[] = "Couldn't mount SD card! See Gamepad for details.";
+		gfx_draw_string(GFX_TV, errorstr, (1280 - sizeof(errorstr)*8) / 2, 500, WHITE);
 		printf("[FATL] SD Card mount error: %d\n", res);
 		panic(0);
 	}

@@ -9,6 +9,7 @@
  */
 
 #include "gfx.h"
+#include "lw-logo.h"
 #include <stdio.h>
 
 extern const u8 msx_font[];
@@ -81,8 +82,43 @@ void SRAM_TEXT gfx_clear(gfx_screen_t screen, u32 color)
 	    for(int i = 0; i < fbs[screen].width * fbs[screen].height; i++)
 	        fbs[screen].ptr[i] = color;
 
+	    gfx_draw_logo(screen);
+
 	    fbs[screen].current_x = 10;
 	    fbs[screen].current_y = 10;
+	}
+}
+
+#define LOGO_TV_SCALE 13
+#define LOGO_DRC_SCALE 8
+#define LOGO_X(gfx, scale) ((fbs[gfx].width - (LOGO_W * scale)) / 2)
+#define LOGO_Y(gfx, scale) ((fbs[gfx].height - (LOGO_H * scale)) / 2)
+
+void SRAM_TEXT gfx_draw_logo(gfx_screen_t screen) {
+	if (screen == GFX_TV) {
+		for (int y = 0; y < LOGO_H; y++) {
+			for (int x = 0; x < LOGO_W; x++) {
+				for (int y2 = 0; y2 < LOGO_TV_SCALE; y2++) {
+					for (int x2 = 0; x2 < LOGO_TV_SCALE; x2++) {
+						int x3 = (x * LOGO_TV_SCALE) + x2 + LOGO_X(GFX_TV, LOGO_TV_SCALE);
+						int y3 = (y * LOGO_TV_SCALE) + y2 + LOGO_Y(GFX_TV, LOGO_TV_SCALE);
+						fbs[screen].ptr[x3 + y3*fbs[screen].width] = ((uint32_t*)lw_logo)[x + y*LOGO_W];
+					}
+				}
+			}
+		}
+	} else if (screen == GFX_DRC) {
+		for (int y = 0; y < LOGO_H; y++) {
+			for (int x = 0; x < LOGO_W; x++) {
+				for (int y2 = 0; y2 < LOGO_DRC_SCALE; y2++) {
+					for (int x2 = 0; x2 < LOGO_DRC_SCALE; x2++) {
+						int x3 = (x * LOGO_DRC_SCALE) + x2 + LOGO_X(GFX_DRC, LOGO_DRC_SCALE);
+						int y3 = (y * LOGO_DRC_SCALE) + y2 + LOGO_Y(GFX_DRC, LOGO_DRC_SCALE);
+						fbs[screen].ptr[x3 + y3*fbs[screen].width] = ((uint32_t*)lw_logo)[x + y*LOGO_W];
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -179,14 +215,14 @@ int printf(const char* fmt, ...)
 		}
 	}
 
-	for(int i = 0; i < GFX_ALL; i++) {
-		if(fbs[i].current_y + lines >= fbs[i].height - 20)
-			gfx_clear(i, BLACK);
+	//for(int i = 0; i < GFX_ALL; i++) {
+		if(fbs[GFX_DRC].current_y + lines >= fbs[GFX_DRC].height - 20)
+			gfx_clear(GFX_DRC, BLACK);
 
-		gfx_draw_string(i, str, /* current_x */ 10, fbs[i].current_y, WHITE);
+		gfx_draw_string(GFX_DRC, str, /* current_x */ 10, fbs[GFX_DRC].current_y, WHITE);
 		//current_x += strlen(last_line);
-		fbs[i].current_y += lines;
-	}
+		fbs[GFX_DRC].current_y += lines;
+	//}
 
 	return 0;
 }

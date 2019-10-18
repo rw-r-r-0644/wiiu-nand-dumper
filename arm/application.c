@@ -202,6 +202,8 @@ void NORETURN app_run() {
 	}
 
 	if (!kernel_loaded) {
+		char errorstr[] = "Loading linux kernel failed! See Gamepad for details.";
+		gfx_draw_string(GFX_TV, errorstr, (1280 - sizeof(errorstr)*8) / 2, 500, WHITE);
 		printf("[FATL] Loading PowerPC kernel failed! (%d)\n", res);
 		panic(0);
 	}
