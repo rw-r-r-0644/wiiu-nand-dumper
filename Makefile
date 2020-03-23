@@ -24,7 +24,7 @@ SOURCES				:=	arm arm/video arm/storage arm/storage/sd \
 						arm/storage/sd/fatfs arm/common arm/system
 
 R_INCLUDES			:=
-INCLUDES 			:=	arm data
+INCLUDES 			:=	arm
 
 DATA				:=
 

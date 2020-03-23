@@ -1,51 +1,22 @@
-# linux-loader
-**An ARM firmware image for the Wii U, designed to work with [linux-wiiu/linux-wiiu](https://gitlab.com/linux-wiiu/linux-wiiu).**
+# wiiu-nand-dumper
+**A simple wiiu slc/slccmpt/otp/seeprom dumper**
 
-### Getting linux-loader
+### Getting wiiu-nand-dumper
 ##### Prebuilt Download
-A precompiled fw.img is available [here](https://gitlab.com/linux-wiiu/linux-loader/-/jobs/artifacts/master/raw/fw.img?job=master-build). Don't think about it too much. Once you've got that, jump down to "Setup" and keep reading.
+A precompiled fw.img is available . Don't think about it too much. Once you've got that, jump down to "Setup" and keep reading.
 
-##### Compiling (Docker)
-The preferred method of compiling is using our Docker image. Clone or download this repository, then:
-```sh
-#replace with wherever you cloned this repo
-cd path/to/linux-loader
-#Run the image!
-docker run --rm -it -v $(pwd):/linux-loader quarktheawesome/wiiu-cfw-builder
-#You should now be in the docker image. Your shell prompt will change.
-cd linux-loader
-#Replace with the Starbuck key and IV, respectively. Make sure it's in all caps
-sed s/B5XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/STARBUCK_KEY_HERE/g -i castify.py
-sed s/91XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/STARBUCK_IV_HERE/g -i castify.py
-#now, compile
-make
-#Once it's done, assuming no errors, go back to your main OS
-exit
-```
-You should now find a fw.img in your linux-loader folder! Congrats. Read the "Setup" section next!
-
-##### Compiling (from scratch, not recommended)
+##### Compiling
 First, edit `castify.py` to add the Starbuck key/IV - this is required to work with current CFW loaders. Then, just run make. You'll need devkitPPC, devkitARM, and armips - you should have all these if you've compiled many CFWs before; I won't go into it here. You should end up with a fw.img, along with a bunch of ELF files.
 
 ### Setup
-You'll need an SD card normally readable by the Wii U. Simply copy the fw.img to the root of the SD; then copy `dtbImage.wiiu` to `sd:/linux` (you should end up with `sd:/linux/dtbImage.wiiu`).
+You'll need an SD card normally readable by the Wii U. Simply copy the fw.img to the root of the SD.
 
 ### Running
-Once you've done everything in the Setup stage, just run your favorite CFW booter (CBHC works, as does the old wiiubru loader). With any luck, linux-loader will start and boot up the Linux kernel.
+Once you've done everything in the Setup stage, just run your favorite CFW booter (CBHC works, as does the old wiiubru loader). With any luck, wiiu-nand-dumper will start the nand dump process.
 
-### Advanced Setup (boot.cfg)
-If you'd like to boot a different kernel or customise your commandline (to change the rootfs, for example) you can make a configuration file at `sd:/linux/boot.cfg`:
-```ini
-[loader]
-default=debian
+### Advantages over other NAND dumpers
+Really not much. The main difference is that this dumper does not rely on IOSU to function, it's a standalone firmware that can work in a couple more particoular situations (deatached ahci drive, possibly other hardware modifications). Also it has a progress bar :P
 
-[profile:debian]
-name=Debian SID
-kernel=sdmc:/linux/dtbImage.wiiu
-cmdline=root=/dev/mmcblk0p2 rootwait
-```
-linux-loader's boot.cfg uses the concept of "profiles" to set up configurations for the Linux kernel. Note the section `[profile:debian]` - this creates a profile named `debian` with all the settings that follow.
-
-The first section, `[loader]`, defines settings to control linux-loader's behaviour. The only option it has right now is `default`, to set the profile to be booted. You can see in the example that this is set to `debian`, so linux-loader will find and use the settings under `[profile:debian]`. This option must be present to use the boot.cfg features. It's intended for forwards-compatibility in case we ever add a boot menu.
-
-The example then contains the section `[profile:debian]`, which defines a profile named `debian`. In this section are the `name`, `kernel` and `cmdline` options. You must define at least one profile in a boot.cfg. The `name` option sets a human-readable name or nickname for your profile. The next option, `kernel`, tells linux-loader where to load dtbImage.wiiu from, and can be any path. **Please note the use of `sdmc:/` instead of `sd:/`!** If this option is not present or the path cannot be read, linux-loader will fall back on `sdmc:/linux/dtbImage.wiiu` then `sdmc:/linux/kernel`. The final option, `cmdline`, sets the kernel commandline to any string. This is useful to control the behaviour of the kernel - in the example above, we set the rootfs to `/dev/mmcblk0p2` (the SD card [`mmcblk0`] partition 2 [`p2`]) allowing us to boot from the SD card! None of these options are strictly needed to use a boot.cfg - linux-loader has defaults it will fall back on, though it's recommended to at least have `name` and `cmdline`.
+### Credits
+- This tool is based on [linux-loader](https://gitlab.com/linux-wiiu/linux-loader) and only applies minor changes  
+- linux-loader is based on [minute](https://github.com/Dazzozo/minute)  

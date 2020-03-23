@@ -1,6 +1,7 @@
 /*
- *	It's a Project! linux-loader
- *
+ *	wiiu-nand-dumper
+ * 
+ *	Copyright (C) 2020          rw-r-r-0644 <rwrr0644@gmail.com>
  *	Copyright (C) 2017          Ash Logan <quarktheawesome@gmail.com>
  *
  *	Based on code from the following contributors:
@@ -36,46 +37,25 @@
 #include "common/utils.h"
 
 void NORETURN _main(void* base) {
-	gfx_clear(GFX_ALL, BLACK);
-	printf("Hello World!\n");
-
-	//Initialize everything
 	exception_initialize();
-	printf("[ OK ] Setup Exceptions\n");
 	mem_initialize();
-	printf("[ OK ] Turned on Caches/MMU\n");
-
 	irq_initialize();
-	printf("[ OK ] Setup Interrupts\n");
-
 	srand(read32(LT_TIMER));
 	crypto_initialize();
-	printf("[ OK ] Setup Crypto\n");
-
 	sdcard_init();
-	printf("[ OK ] Setup SD Card\n");
-
 	int res = ELM_Mount();
 	if (res) {
-		char errorstr[] = "Couldn't mount SD card! See Gamepad for details.";
-		gfx_draw_string(GFX_TV, errorstr, (1280 - sizeof(errorstr)*8) / 2, 500, WHITE);
-		printf("[FATL] SD Card mount error: %d\n", res);
+		printf("SD Card mount error: %d\n", res);
 		panic(0);
 	}
-	printf("[ OK ] Mounted SD Card\n");
-
-	isfs_init();
-	printf("[ OK ] Mounted SLC\n");
-
-	write32(LT_AHBPROT, 0xFFFFFFFF);
-	write32(LT_GPIO_ENABLE, 0xFFFFFFFF);
-	write32(LT_GPIO_OWNER, 0xFFFFFFFF);
-	printf("[ OK ] Unrestricted Hardware\n");
-
-	printf("--------------------------\n");
-	printf("          Ready!          \n");
-	printf("--------------------------\n");
-	//We're good to go!
 
 	app_run();
+
+	ELM_Unmount();
+	sdcard_exit();
+	irq_disable(IRQ_SD0);
+	isfs_fini();
+	irq_shutdown();
+	mem_shutdown();
+	smc_shutdown(false);
 }

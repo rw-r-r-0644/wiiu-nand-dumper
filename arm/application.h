@@ -1,6 +1,7 @@
 /*
- *	It's a Project! linux-loader
- *
+ *	wiiu-nand-dumper
+ * 
+ *	Copyright (C) 2020          rw-r-r-0644 <rwrr0644@gmail.com>
  *	Copyright (C) 2017          Ash Logan <quarktheawesome@gmail.com>
  *
  *	Based on code from the following contributors:
@@ -25,7 +26,6 @@
 
 #include "common/types.h"
 
-void NORETURN app_run();
-extern void NORETURN sram_ctx_switch(void (*sram_func)());
+void app_run();
 
 #endif
