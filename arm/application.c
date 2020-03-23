@@ -48,7 +48,7 @@ void progress(int percent) {
 }
 
 void dump_otp() {
-	FILE* f_otp = fopen("sdmc:/otp.bin", "wb+");
+	FILE* f_otp = fopen("sdmc:/otp.bin", "wb");
 	if(!f_otp)
 		return;
 	printf("Dumping OTP ...\n");
@@ -60,7 +60,7 @@ void dump_otp() {
 
 void dump_seeprom()
 {
-	FILE* f_eep = fopen("sdmc:/seeprom.bin", "wb+");
+	FILE* f_eep = fopen("sdmc:/seeprom.bin", "wb");
 	if(!f_eep)
 		return;
 	printf("Dumping SEEPROM ...\n");
@@ -71,13 +71,14 @@ void dump_seeprom()
 }
 
 #define NAND_PAGES_PER_ITERATION (0x20)	
-void dump_nand(FILE *f, u32 bank)
+void dump_nand(FIL *f, u32 bank)
 {
 	static u8 page_buf[PAGE_SIZE] ALIGNED(64);
 	static u8 ecc_buf[ECC_BUFFER_ALLOC] ALIGNED(128);
 	
 	static u8 file_buf[NAND_PAGES_PER_ITERATION][PAGE_SIZE + PAGE_SPARE_SIZE];
-	
+
+	FRESULT fres = 0; UINT btx = 0;
 	u32 last_percent = (u32)-1;
 
 	nand_initialize(bank);
@@ -102,33 +103,35 @@ void dump_nand(FILE *f, u32 bank)
 			memcpy(file_buf[page] + PAGE_SIZE, ecc_buf, PAGE_SPARE_SIZE);
 		}
 		
-		if(fwrite(file_buf, 1, sizeof(file_buf), f) != sizeof(file_buf))
+		fres = f_write(f, file_buf, sizeof(file_buf), &btx);
+		if(fres != FR_OK || btx != sizeof(file_buf))
+		{
+			f_close(f);
 			return;
+		}
 	}
 	progress(100);
 	printf("\n\n");
-	
-	return 0;
 }
 
 void dump_slc()
 {
-	FILE* f_slc = fopen("sdmc:/slc.bin", "wb+");
-	if(!f_slc)
+	FIL f_slc = {0};
+	if(f_open(&f_slc, "slc.bin", FA_READ | FA_WRITE | FA_CREATE_ALWAYS) != FR_OK)
 		return;
 	printf("Dumping SLC ...\n");
-	dump_nand(f_slc, NAND_BANK_SLC);
-	fclose(f_slc);
+	dump_nand(&f_slc, NAND_BANK_SLC);
+	f_close(&f_slc);
 }
 
 void dump_slccmpt()
 {
-	FILE* f_slccmpt = fopen("sdmc:/slccmpt.bin", "wb+");
-	if(!f_slccmpt)
+	FIL f_slccmpt = {0};
+	if(f_open(&f_slccmpt, "slccmpt.bin", FA_READ | FA_WRITE | FA_CREATE_ALWAYS) != FR_OK)
 		return;
 	printf("Dumping SLCCMPT ...\n");
-	dump_nand(f_slccmpt, NAND_BANK_SLCCMPT);
-	fclose(f_slccmpt);
+	dump_nand(&f_slccmpt, NAND_BANK_SLCCMPT);
+	f_close(&f_slccmpt);
 }
 
 void app_run()
