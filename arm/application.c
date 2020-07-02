@@ -97,7 +97,6 @@ void dump_nand(FIL *f, u32 bank)
 		{
 			nand_read_page(page_base + page, page_buf, ecc_buf);
 			nand_wait();
-			nand_correct(page_base + page, page_buf, ecc_buf);
 			
 			memcpy(file_buf[page], page_buf, PAGE_SIZE);
 			memcpy(file_buf[page] + PAGE_SIZE, ecc_buf, PAGE_SPARE_SIZE);
