@@ -39,11 +39,19 @@
 #include "application.h"
 
 
-void progress(int percent) {
-	static char progressbar[100];
-	if (percent > 100) percent = 100;
-	memset(progressbar, '.', 100);
-	memset(progressbar, '#', percent);
+void progress(u32 current, u32 max) {
+	static char progressbar[64];
+	static u32 last = 0;
+	if (current > max) {
+		current = max;
+	}
+	u32 percent = (current * 100) / max;
+	if (percent == last) {
+		return;
+	}
+	last = percent;
+	memset(progressbar, '.', sizeof(progressbar));
+	memset(progressbar, '#', (current * sizeof(progressbar)) / max);
 	printf("%03d%% [%s]", percent, progressbar);
 }
 
@@ -52,9 +60,10 @@ void dump_otp() {
 	if(!f_otp)
 		return;
 	printf("Dumping OTP ...\n");
+	progress(0, 100);
 	fwrite(&otp, 1, sizeof(otp_t), f_otp);
 	fclose(f_otp);
-	progress(100);
+	progress(100, 100);
 	printf("\n\n");
 }
 
@@ -64,43 +73,30 @@ void dump_seeprom()
 	if(!f_eep)
 		return;
 	printf("Dumping SEEPROM ...\n");
+	progress(0, 100);
 	fwrite(&seeprom, 1, sizeof(seeprom_t), f_eep);
 	fclose(f_eep);
-	progress(100);
+	progress(100, 100);
 	printf("\n\n");
 }
 
 #define NAND_PAGES_PER_ITERATION (0x20)	
 void dump_nand(FIL *f, u32 bank)
 {
-	static u8 page_buf[PAGE_SIZE] ALIGNED(64);
-	static u8 ecc_buf[ECC_BUFFER_ALLOC] ALIGNED(128);
-	
-	static u8 file_buf[NAND_PAGES_PER_ITERATION][PAGE_SIZE + PAGE_SPARE_SIZE];
+	static u8 file_buf[NAND_PAGES_PER_ITERATION][PAGE_SIZE + SPARE_SIZE] ALIGNED(128);
 
 	FRESULT fres = 0; UINT btx = 0;
-	u32 last_percent = (u32)-1;
 
 	nand_initialize(bank);
 
-	for(u32 i = 0; i < (NAND_MAX_PAGE / NAND_PAGES_PER_ITERATION); i++)
+	for(u32 i = 0; i < (PAGE_COUNT / NAND_PAGES_PER_ITERATION); i++)
 	{
 		u32 page_base = i * NAND_PAGES_PER_ITERATION;
 
-		u32 percent = (page_base * 100) / NAND_MAX_PAGE;
-		if(percent != last_percent) {
-			progress(percent);
-			last_percent = percent;
-		}
+		progress(page_base, PAGE_COUNT);
 		
 		for(u32 page = 0; page < NAND_PAGES_PER_ITERATION; page++)
-		{
-			nand_read_page(page_base + page, page_buf, ecc_buf);
-			nand_wait();
-			
-			memcpy(file_buf[page], page_buf, PAGE_SIZE);
-			memcpy(file_buf[page] + PAGE_SIZE, ecc_buf, PAGE_SPARE_SIZE);
-		}
+			nand_read_page(page_base + page, file_buf[page], file_buf[page] + PAGE_SIZE);
 		
 		fres = f_write(f, file_buf, sizeof(file_buf), &btx);
 		if(fres != FR_OK || btx != sizeof(file_buf))
@@ -109,7 +105,7 @@ void dump_nand(FIL *f, u32 bank)
 			return;
 		}
 	}
-	progress(100);
+	progress(100, 100);
 	printf("\n\n");
 }
 
@@ -119,7 +115,7 @@ void dump_slc()
 	if(f_open(&f_slc, "slc.bin", FA_READ | FA_WRITE | FA_CREATE_ALWAYS) != FR_OK)
 		return;
 	printf("Dumping SLC ...\n");
-	dump_nand(&f_slc, NAND_BANK_SLC);
+	dump_nand(&f_slc, BANK_SLC);
 	f_close(&f_slc);
 }
 
@@ -129,7 +125,7 @@ void dump_slccmpt()
 	if(f_open(&f_slccmpt, "slccmpt.bin", FA_READ | FA_WRITE | FA_CREATE_ALWAYS) != FR_OK)
 		return;
 	printf("Dumping SLCCMPT ...\n");
-	dump_nand(&f_slccmpt, NAND_BANK_SLCCMPT);
+	dump_nand(&f_slccmpt, BANK_SLCCMPT);
 	f_close(&f_slccmpt);
 }
 
